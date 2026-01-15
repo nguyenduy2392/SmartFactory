@@ -1,7 +1,7 @@
 # =========================
 # BUILD STAGE
 # =========================
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 
 # copy solution
@@ -12,7 +12,7 @@ COPY SmartFactory.Application/SmartFactory.Application.csproj SmartFactory.Appli
 COPY SmartFactory.Api/SmartFactory.Api.csproj SmartFactory.Api/
 
 # restore
-RUN dotnet restore
+RUN dotnet restore SmartFactory.Api/SmartFactory.Api.csproj --disable-parallel
 
 # copy toàn bộ source
 COPY . .
@@ -24,7 +24,7 @@ RUN dotnet publish -c Release -o /app/publish
 # =========================
 # RUNTIME STAGE
 # =========================
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
 
 EXPOSE 8080
@@ -32,4 +32,4 @@ ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "SmartFactory.dll"]
+ENTRYPOINT ["dotnet", "SmartFactory.Api.dll"]
