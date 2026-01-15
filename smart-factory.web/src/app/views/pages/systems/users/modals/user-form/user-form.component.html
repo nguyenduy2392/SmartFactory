@@ -1,0 +1,68 @@
+<div class="grid content">
+  <div class="col-12">
+    <div class="grid">
+      <!-- Họ tên -->
+      <div class="col-6">
+        <label class="block text-900 font-medium mb-2">
+          Họ tên <span class="text-red-500">*</span>
+        </label>
+        <input [(ngModel)]="formData.fullName" name="fullName" type="text" pInputText class="w-full" 
+          placeholder="Nhập họ tên người dùng" />
+      </div>
+
+      <!-- Email -->
+      <div class="col-6">
+        <label class="block text-900 font-medium mb-2">
+          Email <span class="text-red-500">*</span>
+        </label>
+        <input [(ngModel)]="formData.email" name="email" type="email" pInputText class="w-full" 
+          placeholder="Nhập email" [disabled]="isUpdate" />
+      </div>
+
+      <!-- Số điện thoại -->
+      <div class="col-6">
+        <label class="block text-900 font-medium mb-2">Số điện thoại</label>
+        <input [(ngModel)]="formData.phoneNumber" name="phoneNumber" type="text" pInputText class="w-full" 
+          placeholder="Nhập số điện thoại" />
+      </div>
+
+      <!-- Mật khẩu -->
+      <div class="col-6">
+        <label class="block text-900 font-medium mb-2">
+          Mật khẩu 
+          <span class="text-red-500" *ngIf="!isUpdate">*</span>
+          <span class="text-500 text-sm" *ngIf="isUpdate">(Để trống nếu không đổi)</span>
+        </label>
+        <p-password [(ngModel)]="formData.password" name="password" [feedback]="false" class="w-full" 
+          styleClass="w-full" inputStyleClass="w-full" placeholder="Nhập mật khẩu" [toggleMask]="true" />
+      </div>
+
+      <!-- Trạng thái (chỉ hiển thị khi cập nhật) -->
+      <div class="col-6" *ngIf="isUpdate">
+        <label class="block text-900 font-medium mb-2">Trạng thái</label>
+        <p-dropdown [(ngModel)]="formData.isActive" name="isActive" [options]="[
+          { label: 'Đang hoạt động', value: true },
+          { label: 'Đã khóa', value: false }
+        ]" optionLabel="label" optionValue="value" [style]="{ width: '100%' }" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer buttons -->
+<div class="flex justify-content-end align-items-center gap-2 pt-4 border-top-1 border-300 mt-4">
+  <!-- Đóng -->
+  <p-button (onClick)="Close()" icon="pi pi-times" severity="secondary" label="Đóng" [outlined]="true" />
+
+  <!-- Xóa (chỉ hiển thị khi cập nhật) -->
+  <p-button (onClick)="Delete()" *ngIf="isUpdate" icon="pi pi-trash" severity="danger" label="Xóa" [outlined]="true" />
+
+  <!-- Thêm mới -->
+  <p-button *ngIf="!isUpdate" (onClick)="Save()" icon="pi pi-plus" label="Thêm mới" [loading]="isLoading" />
+
+  <!-- Cập nhật -->
+  <p-button *ngIf="isUpdate" (onClick)="Save()" icon="pi pi-check" severity="warning" label="Cập nhật" [loading]="isLoading" />
+</div>
+
+<!-- Xác nhận xóa -->
+<p-confirmDialog key="confirmDelete" position="top" />

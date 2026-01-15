@@ -1,0 +1,438 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-bold m-0">
+      <i class="pi pi-check-circle mr-2"></i>
+      Kiểm tra khả dụng linh kiện
+    </h2>
+  </div>
+
+  <p-message 
+    severity="info" 
+    text="Kiểm tra xem linh kiện có thể sản xuất được hay không. Chọn linh kiện và loại gia công để kiểm tra."
+    class="mb-4">
+  </p-message>
+
+  <!-- Check Form -->
+  <p-card class="mb-4">
+    <div class="p-fluid">
+      <div class="grid">
+        <div class="col-12 md:col-4" *ngIf="!customerId">
+          <div class="field">
+            <label for="customer">Chọn chủ hàng <span class="text-red-500">*</span></label>
+            <p-dropdown
+              id="customer"
+              [options]="customers"
+              [(ngModel)]="selectedCustomerId"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Chọn chủ hàng..."
+              [filter]="true"
+              filterBy="name,code"
+              [style]="{'width': '100%'}"
+              emptyMessage="Không có chủ hàng"
+              [showClear]="true"
+              appendTo="body">
+              <ng-template let-customer pTemplate="item">
+                <div>
+                  <strong>{{ customer.name }}</strong>
+                  <div class="text-sm text-500">{{ customer.code }}</div>
+                </div>
+              </ng-template>
+              <ng-template let-customer pTemplate="selectedItem">
+                <div>
+                  <strong>{{ customer.name }}</strong>
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-4">
+          <div class="field">
+            <label for="part">Chọn linh kiện <span class="text-red-500">*</span></label>
+            <p-dropdown
+              id="part"
+              [options]="parts"
+              [(ngModel)]="selectedPartId"
+              optionLabel="code"
+              optionValue="id"
+              placeholder="Chọn linh kiện..."
+              [filter]="true"
+              filterBy="code,name"
+              [style]="{'width': '100%'}"
+              [loading]="loading"
+              emptyMessage="Không có linh kiện"
+              [showClear]="true"
+              appendTo="body">
+              <ng-template let-part pTemplate="item">
+                <div class="flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ part.code }}</strong>
+                    <div class="text-sm text-500">{{ part.name }}</div>
+                  </div>
+                </div>
+              </ng-template>
+              <ng-template let-part pTemplate="selectedItem">
+                <div>
+                  <strong>{{ part.code }}</strong> - {{ part.name }}
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-4">
+          <div class="field">
+            <label for="processingType">Chọn loại gia công <span class="text-red-500">*</span></label>
+            <p-dropdown
+              id="processingType"
+              [options]="processingTypes"
+              [(ngModel)]="selectedProcessingTypeId"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Chọn loại gia công..."
+              [filter]="true"
+              filterBy="name,code"
+              [style]="{'width': '100%'}"
+              emptyMessage="Không có loại gia công"
+              [showClear]="true"
+              appendTo="body">
+              <ng-template let-type pTemplate="item">
+                <div>
+                  <strong>{{ type.name }}</strong>
+                  <div class="text-sm text-500">{{ type.code }}</div>
+                </div>
+              </ng-template>
+              <ng-template let-type pTemplate="selectedItem">
+                <div>
+                  <strong>{{ type.name }}</strong>
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-4">
+          <div class="field">
+            <label for="quantity">Số lượng <span class="text-red-500">*</span></label>
+            <p-inputNumber
+              id="quantity"
+              [(ngModel)]="quantity"
+              [min]="1"
+              [showButtons]="true"
+              buttonLayout="horizontal"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus"
+              placeholder="Nhập số lượng..."
+              [style]="{'width': '100%'}">
+            </p-inputNumber>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex gap-2 mt-3">
+        <p-button
+          label="Kiểm tra"
+          icon="pi pi-search"
+          (onClick)="checkAvailability()"
+          [loading]="checkLoading"
+          severity="success">
+        </p-button>
+        <p-button
+          label="Làm mới"
+          icon="pi pi-refresh"
+          (onClick)="resetForm()"
+          styleClass="p-button-outlined"
+          size="small">
+        </p-button>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Result Section -->
+  <div *ngIf="availabilityResult">
+    <p-divider></p-divider>
+
+    <!-- Overall Status -->
+    <div class="mb-4">
+      <div class="overall-status-card" [ngClass]="getStatusClass(availabilityResult.overallStatus)">
+        <div class="flex align-items-center justify-content-center gap-3 p-4">
+          <i [ngClass]="[getOverallStatusIcon(availabilityResult.overallStatus), 'status-icon']"></i>
+          <div class="text-center">
+            <div class="status-label">{{ getOverallStatusLabel(availabilityResult.overallStatus) }}</div>
+            <div class="text-sm text-600 mt-2">
+              <i class="pi pi-calendar mr-2"></i>
+              Kiểm tra lúc: {{ availabilityResult.checkDate | date:'dd/MM/yyyy HH:mm:ss' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid mb-4">
+      <div class="col-12 md:col-6">
+        <p-card>
+          <div class="flex flex-column align-items-center text-center">
+            <i class="pi pi-sitemap text-5xl text-blue-500 mb-3"></i>
+            <div class="text-500 mb-2 text-lg">Tổng số linh kiện</div>
+            <div class="text-4xl font-bold text-primary">{{ availabilityResult.partResults.length }}</div>
+          </div>
+        </p-card>
+      </div>
+      <div class="col-12 md:col-6">
+        <p-card>
+          <div class="flex flex-column align-items-center text-center">
+            <i class="pi pi-check-circle text-5xl mb-3" 
+               [ngClass]="getStatusColor(availabilityResult.overallStatus)"></i>
+            <div class="text-500 mb-2 text-lg">Có thể sản xuất</div>
+            <div class="text-4xl font-bold" 
+                 [ngClass]="getStatusColor(availabilityResult.overallStatus)">
+              {{ getCanProduceCount() }} / {{ availabilityResult.partResults.length }}
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+
+    <!-- Part Details Table -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-2 p-3">
+          <i class="pi pi-list text-xl"></i>
+          <span class="text-xl font-semibold">Chi tiết theo linh kiện</span>
+        </div>
+      </ng-template>
+
+      <p-table
+        [value]="availabilityResult.partResults"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm p-datatable-gridlines"
+        dataKey="partId">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 50px"></th>
+            <th pSortableColumn="partCode">
+              Mã linh kiện
+              <p-sortIcon field="partCode"></p-sortIcon>
+            </th>
+            <th pSortableColumn="partName">
+              Tên linh kiện
+              <p-sortIcon field="partName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="processingType">
+              Loại gia công
+              <p-sortIcon field="processingType"></p-sortIcon>
+            </th>
+            <th pSortableColumn="requiredQty" class="text-right">
+              Số lượng cần
+              <p-sortIcon field="requiredQty"></p-sortIcon>
+            </th>
+            <th pSortableColumn="bomVersion">
+              BOM Version
+              <p-sortIcon field="bomVersion"></p-sortIcon>
+            </th>
+            <th pSortableColumn="canProduce" class="text-center">
+              Có thể sản xuất
+              <p-sortIcon field="canProduce"></p-sortIcon>
+            </th>
+            <th pSortableColumn="severity" class="text-center">
+              Tình trạng
+              <p-sortIcon field="severity"></p-sortIcon>
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-part>
+          <tr [ngClass]="getRowClass(part.severity)">
+            <td>
+              <button 
+                type="button" 
+                pButton 
+                pRipple 
+                (click)="toggleMaterialDetails(part)"
+                [icon]="isPartExpanded(part) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                class="p-button-text p-button-rounded p-button-plain"
+                *ngIf="part.materialDetails && part.materialDetails.length > 0">
+              </button>
+            </td>
+            <td>
+              <code>{{ part.partCode }}</code>
+            </td>
+            <td>{{ part.partName }}</td>
+            <td>
+              <p-tag [value]="part.processingTypeName" severity="info"></p-tag>
+            </td>
+            <td class="text-right">
+              <strong>{{ part.requiredQty }}</strong>
+            </td>
+            <td>
+              <span *ngIf="part.bomVersion" class="font-semibold">{{ part.bomVersion }}</span>
+              <span *ngIf="!part.bomVersion" class="text-500">-</span>
+            </td>
+            <td class="text-center">
+              <i [ngClass]="getCanProduceIcon(part.canProduce)" 
+                 class="text-2xl"></i>
+            </td>
+            <td class="text-center">
+              <p-tag
+                [value]="getPartSeverityLabel(part)"
+                [severity]="getPartSeveritySeverity(part)">
+              </p-tag>
+            </td>
+          </tr>
+          <tr *ngIf="isPartExpanded(part)">
+            <td colspan="8" class="p-0">
+              <div class="p-3 bg-gray-50">
+                <h5 class="mb-3 font-semibold">
+                  <i class="pi pi-list mr-2"></i>
+                  Chi tiết nguyên vật liệu
+                </h5>
+                <p-table
+                  [value]="part.materialDetails || []"
+                  styleClass="p-datatable-sm p-datatable-gridlines"
+                  [tableStyle]="{'width': '100%'}">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Mã NVL</th>
+                      <th>Tên NVL</th>
+                      <th class="text-right">SL/PCS</th>
+                      <th class="text-right">Hao hụt (%)</th>
+                      <th>ĐVT</th>
+                      <th class="text-right">Cần</th>
+                      <th class="text-right">Có sẵn</th>
+                      <th class="text-right">Thiếu</th>
+                      <th class="text-center">Tình trạng</th>
+                      <th>Nhà cung cấp</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-material>
+                    <tr [ngClass]="getMaterialRowClass(material.severity)">
+                      <td><code>{{ material.materialCode }}</code></td>
+                      <td>{{ material.materialName || '-' }}</td>
+                      <td class="text-right">{{ material.quantityPerUnit | number:'1.4-4' }}</td>
+                      <td class="text-right">{{ (material.scrapRate * 100) | number:'1.2-2' }}%</td>
+                      <td>{{ material.unit }}</td>
+                      <td class="text-right">
+                        <strong>{{ material.requiredQuantity | number:'1.2-2' }}</strong>
+                      </td>
+                      <td class="text-right">
+                        <span [ngClass]="material.materialFound ? '' : 'text-500'">
+                          {{ material.materialFound ? (material.availableQuantity | number:'1.2-2') : 'N/A' }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <strong [ngClass]="material.shortage > 0 ? 'text-red-500' : ''">
+                          {{ material.shortage | number:'1.2-2' }}
+                        </strong>
+                      </td>
+                      <td class="text-center">
+                        <p-tag
+                          [value]="getMaterialSeverityLabel(material.severity)"
+                          [severity]="getMaterialSeveritySeverity(material.severity)">
+                        </p-tag>
+                      </td>
+                      <td>
+                        <span *ngIf="material.customerName">{{ material.customerName }}</span>
+                        <span *ngIf="!material.materialFound" class="text-500">Không tìm thấy</span>
+                        <span *ngIf="material.materialFound && !material.customerName" class="text-500">-</span>
+                      </td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="10" class="text-center p-3">
+                        <i class="pi pi-info-circle text-400 mr-2"></i>
+                        Không có thông tin nguyên vật liệu
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center">
+              <div class="p-4">
+                <i class="pi pi-inbox text-4xl text-400"></i>
+                <p class="text-xl text-500 mt-3">Không có dữ liệu</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- Action Messages -->
+    <div class="mt-4">
+      <p-message
+        *ngIf="availabilityResult.overallStatus === 'FAIL'"
+        severity="error"
+        [closable]="false">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center">
+            <i class="pi pi-times-circle text-2xl mr-3"></i>
+            <div>
+              <strong class="block mb-1">Có linh kiện không thể sản xuất</strong>
+              <p class="m-0">Một số linh kiện không có BOM đang hoạt động. Vui lòng tạo BOM trước khi tạo kế hoạch sản xuất.</p>
+            </div>
+          </div>
+        </ng-template>
+      </p-message>
+
+      <p-message
+        *ngIf="availabilityResult.overallStatus === 'WARNING'"
+        severity="warn"
+        [closable]="false">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center">
+            <i class="pi pi-exclamation-triangle text-2xl mr-3"></i>
+            <div>
+              <strong class="block mb-1">Cảnh báo</strong>
+              <p class="m-0">Có linh kiện cần kiểm tra trước khi tạo kế hoạch sản xuất.</p>
+            </div>
+          </div>
+        </ng-template>
+      </p-message>
+
+      <p-message
+        *ngIf="availabilityResult.overallStatus === 'PASS'"
+        severity="success"
+        [closable]="false">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center justify-content-between">
+            <div class="flex align-items-center">
+              <i class="pi pi-check-circle text-2xl mr-3"></i>
+              <div>
+                <strong class="block mb-1">Tất cả linh kiện có thể sản xuất</strong>
+                <p class="m-0">Có thể tiến hành tạo kế hoạch sản xuất.</p>
+              </div>
+            </div>
+            <p-button
+              label="Tạo kế hoạch sản xuất"
+              icon="pi pi-calendar-plus"
+              severity="success"
+              [disabled]="true"
+              pTooltip="Chức năng này sẽ được triển khai trong phase tiếp theo"
+              tooltipPosition="left">
+            </p-button>
+          </div>
+        </ng-template>
+      </p-message>
+    </div>
+  </div>
+
+  <div *ngIf="!availabilityResult" class="text-center p-5">
+    <i class="pi pi-info-circle text-5xl text-400 mb-3"></i>
+    <p class="text-xl text-500">Chọn linh kiện, loại gia công và nhập số lượng để kiểm tra khả dụng</p>
+  </div>
+</div>
+
+<p-toast></p-toast>
+

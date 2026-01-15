@@ -1,0 +1,129 @@
+<div class="customers-container">
+
+  <!-- Search and Filter Bar -->
+  <div class="search-filter-card mb-3">
+    <div class="flex flex-column md:flex-row gap-4 align-items-center justify-content-between">
+      <div class="flex flex-column sm:flex-row gap-4 w-full md:w-auto flex-1">
+        <!-- Lọc dữ liệu -->
+        <div class="relative flex-1 max-w-sm">
+          <i class="pi pi-search search-icon"></i>
+          <input type="text" pInputText [(ngModel)]="searchText" name="searchText" (input)="onSearch()"
+            placeholder="Nhập từ khóa tìm kiếm" class="w-full search-input">
+        </div>
+      </div>
+      <!-- Chức năng -->
+      <div class="flex gap-2 justify-content-end" style="width: 40rem;">
+        <button pButton label="Thêm mới" icon="pi pi-plus" class="p-button-success w-full md:w-auto"
+          (click)="openCreateDialog()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customers Table -->
+  <div class="table-card">
+    <div class="table-wrapper">
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th class="checkbox-column">
+              <p-checkbox [(ngModel)]="selectAll" [binary]="true" (onChange)="toggleSelectAll()">
+              </p-checkbox>
+            </th>
+            <th>Tên</th>
+            <th>Công ty</th>
+            <th>Số điện thoại</th>
+            <th>Địa chỉ</th>
+            <th>Ngày tạo</th>
+            <th class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="paginatedCustomers.length > 0">
+          <tr *ngFor="let customer of paginatedCustomers" class="table-row" [class.selected]="isSelected(customer)" (click)="navigateToDetail(customer)" style="cursor: pointer;">
+            <td class="checkbox-column" (click)="$event.stopPropagation()">
+              <p-checkbox [(ngModel)]="customer.selected" [binary]="true" (onChange)="toggleCustomer(customer)">
+              </p-checkbox>
+            </td>
+            <td>
+              <div class="flex align-items-center gap-3">
+                <p-avatar [label]="getInitials(customer.contactPerson || customer.name)"
+                  [style]="{'background-color': getAvatarColor(customer.contactPerson || customer.name), 'color': '#ffffff'}"
+                  shape="circle" styleClass="customer-avatar">
+                </p-avatar>
+                <span class="contact-name">{{ customer.contactPerson || '-' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="company-name">{{ customer.name }}</span>
+            </td>
+            <td>
+              <span class="phone-number">{{ customer.phone || '-' }}</span>
+            </td>
+            <td class="address-cell" [title]="customer.address || ''">
+              {{ truncateAddress(customer.address) }}
+            </td>
+            <td>
+              <span class="date-text">{{ formatDate(customer.createdAt) }}</span>
+            </td>
+            <td class="text-center" (click)="$event.stopPropagation()">
+              <button pButton 
+                icon="pi pi-bars" 
+                class="p-button-soft p-button-primary p-button-sm p-button-rounded action-menu-btn"
+                pTooltip="Thao tác"
+                (click)="showActionMenu($event, customer); actionMenu.toggle($event)">
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="paginatedCustomers.length === 0 && !loading">
+          <tr>
+            <td colspan="8" class="text-center py-8">
+              <i class="pi pi-inbox text-6xl mb-3 block text-gray-300"></i>
+              <p class="text-lg font-medium text-gray-500">Không có dữ liệu</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer" *ngIf="filteredCustomers.length > 0">
+      <div class="pagination-info">
+        Hiển thị <span class="font-bold">{{ getFirstRecord() }}</span> đến
+        <span class="font-bold">{{ getLastRecord() }}</span> trong tổng số
+        <span class="font-bold">{{ filteredCustomers.length }}</span> chủ hàng
+      </div>
+      <div class="flex gap-2 align-items-center">
+        <button pButton label="Trang trước" icon="pi pi-chevron-left" class="p-button-soft p-button-primary p-button-sm"
+          [disabled]="currentPage === 1" (click)="previousPage()">
+        </button>
+        <div class="flex gap-1 page-numbers">
+          <button *ngFor="let page of getPageNumbers()" pButton [label]="page.toString()"
+            [class]="page === currentPage ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-text'"
+            (click)="goToPage(page)">
+          </button>
+        </div>
+        <button pButton label="Trang sau" icon="pi pi-chevron-right" iconPos="right" class="p-button-soft p-button-primary p-button-sm"
+          [disabled]="currentPage >= getTotalPages()" (click)="nextPage()">
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Menu -->
+<p-menu #actionMenu [model]="actionMenuItems" [popup]="true"></p-menu>
+
+<!-- Confirm Delete Dialog -->
+<p-dialog [(visible)]="showDeleteDialog" header="Xác nhận xóa" [modal]="true" [style]="{width: '400px'}"
+  [draggable]="false" [resizable]="false">
+  <p>Bạn có chắc chắn muốn xóa chủ hàng <strong>{{ customerToDelete?.name }}</strong>?</p>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Hủy" icon="pi pi-times" class="p-button-text"
+      (click)="showDeleteDialog = false"></button>
+    <button pButton type="button" label="Xóa" icon="pi pi-trash" class="p-button-danger"
+      (click)="deleteCustomer()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>

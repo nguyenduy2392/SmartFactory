@@ -1,0 +1,81 @@
+.customer-detail-container {
+  padding-bottom: 1rem;
+  background: white;
+}
+
+.header-card {
+  background: var(--surface-card);
+  padding: 1rem;
+  border-radius: 3px;
+}
+
+.customer-avatar {
+  width: 60px !important;
+  height: 60px !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--surface-card);
+}
+
+.customer-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.customer-info {
+  font-size: 1.4rem;
+  color: var(--text-color-secondary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.content-card {
+  background: var(--surface-card);
+  padding: 1rem;
+  padding-top: 0rem;
+  border-radius: 3px;
+}
+
+// TabView styles
+:host ::ng-deep {
+  .p-tabview {
+    .p-tabview-nav {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--surface-border);
+      // margin-bottom: 1.5rem;
+
+      li {
+        .p-tabview-nav-link {
+          padding: 0.75rem 1.5rem;
+          font-size: 1rem;
+          font-weight: 500;
+          border: none;
+          border-bottom: 2px solid transparent;
+          transition: all 0.2s;
+
+          &:hover {
+            color: var(--primary-color);
+            background: transparent;
+          }
+        }
+
+        &.p-highlight {
+          .p-tabview-nav-link {
+            // border-bottom-color: var(--primary-color);
+            background: transparent;
+          }
+        }
+      }
+    }
+
+    .p-tabview-panels {
+      padding: 0;
+      background: transparent;
+    }
+  }
+
+}

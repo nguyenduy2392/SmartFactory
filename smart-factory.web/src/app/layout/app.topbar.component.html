@@ -1,0 +1,26 @@
+<div class="layout-topbar">
+    <a class="layout-topbar-logo" routerLink="">
+        <img src="../../assets/images/logo-full.png" alt="logo">
+    </a>
+
+    <button #menubutton class="p-link layout-menu-button layout-topbar-button" (click)="layoutService.onMenuToggle()">
+        <i class="pi pi-bars"></i>
+    </button>
+
+    <div class="flex flex-column ml-3">
+        <span class="text-900 font-bold text-sm white-space-nowrap">TÊN DOANH NGHIỆP</span>
+        <span class="text-primary text-xs">Địa chỉ doanh nghiệp</span>
+    </div>
+
+    <div #topbarmenu class="layout-topbar-menu">
+        <button class="p-link layout-topbar-button" (click)="userMenu.toggle($event)">
+            <i class="pi pi-user"></i>
+        </button>
+
+        <p-menu #userMenu [model]="userMenus" [popup]="true" />
+
+        <button class="p-link layout-topbar-button">
+            <i class="pi pi-bell"></i>
+        </button>
+    </div>
+</div>

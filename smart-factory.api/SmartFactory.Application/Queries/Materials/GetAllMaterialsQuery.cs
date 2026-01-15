@@ -1,0 +1,80 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using SmartFactory.Application.Data;
+using SmartFactory.Application.DTOs;
+
+namespace SmartFactory.Application.Queries.Materials;
+
+public class GetAllMaterialsQuery : IRequest<List<MaterialDto>>
+{
+    public bool? IsActive { get; set; }
+    public Guid? CustomerId { get; set; }
+    /// <summary>
+    /// Nếu true, chỉ lấy materials thuộc CustomerId, không bao gồm materials dùng chung (CustomerId = null)
+    /// Nếu false hoặc null, lấy materials của Customer đó + materials dùng chung
+    /// </summary>
+    public bool? ExcludeShared { get; set; }
+}
+
+public class GetAllMaterialsQueryHandler : IRequestHandler<GetAllMaterialsQuery, List<MaterialDto>>
+{
+    private readonly ApplicationDbContext _context;
+
+    public GetAllMaterialsQueryHandler(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<List<MaterialDto>> Handle(GetAllMaterialsQuery request, CancellationToken cancellationToken)
+    {
+        var query = _context.Materials
+            .Include(m => m.Customer)
+            .AsQueryable();
+
+        // Apply filters
+        if (request.IsActive.HasValue)
+        {
+            query = query.Where(m => m.IsActive == request.IsActive.Value);
+        }
+
+        // Filter theo CustomerId
+        if (request.CustomerId.HasValue && request.CustomerId.Value != Guid.Empty)
+        {
+            if (request.ExcludeShared == true)
+            {
+                // Chỉ lấy materials thuộc CustomerId, không bao gồm materials dùng chung
+                query = query.Where(m => m.CustomerId == request.CustomerId.Value);
+            }
+            else
+            {
+                // Lấy materials của Customer đó + materials dùng chung (CustomerId = null)
+                query = query.Where(m => m.CustomerId == request.CustomerId.Value || m.CustomerId == null);
+            }
+        }
+
+        var materials = await query
+            .OrderByDescending(m => m.CreatedAt)
+            .Select(m => new MaterialDto
+            {
+                Id = m.Id,
+                Code = m.Code,
+                Name = m.Name,
+                Type = m.Type,
+                ColorCode = m.ColorCode,
+                Supplier = m.Supplier,
+                Unit = m.Unit,
+                CurrentStock = m.CurrentStock,
+                MinStock = m.MinStock,
+                Description = m.Description,
+                IsActive = m.IsActive,
+                CreatedAt = m.CreatedAt,
+                CustomerId = m.CustomerId,
+                CustomerCode = m.Customer != null ? m.Customer.Code : null,
+                CustomerName = m.Customer != null ? m.Customer.Name : null
+            })
+            .ToListAsync(cancellationToken);
+
+        return materials;
+    }
+}
+
